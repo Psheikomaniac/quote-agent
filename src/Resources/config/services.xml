@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services
+               https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+
+        <!-- ═══════════════════════════════════════════════
+             Entity Definition
+             Registering this tag auto-creates the
+             b2b_quote_request.repository service.
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Core\Quote\QuoteRequestDefinition">
+            <tag name="shopware.entity.definition" entity="b2b_quote_request"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             Repository Wrapper
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Core\Quote\QuoteRequestRepository">
+            <argument type="service" id="b2b_quote_request.repository"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             Pricing (PRD-003)
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Core\Pricing\QuotePricingService">
+            <argument type="service" id="product.repository"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             AI Adapters (PRD-004)
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Core\AI\AnthropicAdapter">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <service id="QuoteAgent\Core\AI\OpenAiAdapter">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             Text Generator (PRD-004)
+             Default adapter: Anthropic. Swap to OpenAiAdapter
+             by changing the argument below.
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Core\AI\QuoteTextGeneratorService">
+            <argument type="service" id="QuoteAgent\Core\AI\AnthropicAdapter"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             PDF Service (PRD-005)
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Core\Pdf\QuotePdfService">
+            <argument type="service" id="logger"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             Controller (PRD-002, PRD-007)
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Controller\QuoteRequestController"
+                 public="true">
+            <tag name="controller.service_arguments"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             Event Subscriber (PRD-006, PRD-008)
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\Subscriber\QuoteRequestSubscriber">
+            <argument type="service" id="logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!-- ═══════════════════════════════════════════════
+             Scheduled Task (PRD-008)
+        ════════════════════════════════════════════════ -->
+
+        <service id="QuoteAgent\ScheduledTask\QuoteExpirationTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="QuoteAgent\ScheduledTask\QuoteExpirationTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="logger"/>
+            <argument type="service" id="QuoteAgent\Core\Quote\QuoteRequestRepository"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+    </services>
+
+</container>
